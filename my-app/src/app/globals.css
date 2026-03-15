@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Force black text to avoid white-on-white visibility issues */
+body, a, button, input, textarea, select, label, p, span, li, h1, h2, h3, h4, h5, h6 {
+  color: #000 !important;
+}
+input, textarea, select, button {
+  color: #000 !important;
+}
+::placeholder { color: #000 !important; opacity: 1; }
+
+.hero-gradient {
+  background: linear-gradient(90deg, #ffd6cf 0%, #e9d7ff 100%);
+  padding: 2rem;
+}
+
+input[type="text"], input[type="email"], input { 
+  outline: none;
+}
+
+@media (min-width: 768px) {
+  .hero-gradient { padding: 3rem; }
+}
