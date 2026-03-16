@@ -25,8 +25,8 @@ export default function Home() {
 
       if (!mounted) return
       if (error) {
-        console.error('Error fetching jobs:', error)
-        setFetchError(error.message ?? String(error))
+        console.error('Error fetching jobs:', error, JSON.stringify(error))
+        setFetchError(error?.message ?? JSON.stringify(error))
         setJobs([])
       } else {
         setFetchError(null)
@@ -122,11 +122,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <div className="text-black/80">{job.employment_type ?? ''} {job.is_remote ? '• Zdalnie' : ''}</div>
-                  {job.apply_url ? (
-                    <a href={job.apply_url} target="_blank" rel="noopener noreferrer" className="text-blue-600">Aplikuj</a>
-                  ) : (
-                    <Link href={`/jobs/${job.id}`} className="text-blue-600">Szczegóły</Link>
-                  )}
+                  <Link href={`/jobs/${job.id}`} className="text-blue-600">Szczegóły</Link>
                 </div>
               </article>
             ))}

@@ -13,6 +13,12 @@ export default function JobDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const [applying, setApplying] = useState(false);
+  const [showApplyForm, setShowApplyForm] = useState(false);
+  const [expectedSalary, setExpectedSalary] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [cvText, setCvText] = useState<string>('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -88,39 +94,89 @@ export default function JobDetailPage() {
           </div>
 
           <div className="mt-6">
-            <button
-              onClick={async () => {
-                if (!job) return;
-                if (job.apply_url) {
-                  window.open(job.apply_url, '_blank', 'noopener');
-                  return;
-                }
+            {!showApplyForm ? (
+              <button
+                onClick={() => setShowApplyForm(true)}
+                className="inline-block bg-blue-600 text-white px-4 py-2 rounded"
+              >
+                Aplikuj
+              </button>
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!job) return;
+                  setSubmitting(true);
+                  const { data: userData } = await supabase.auth.getUser();
+                  const user = userData?.user ?? null;
+                  if (!user) {
+                    setSubmitting(false);
+                    router.push('/login');
+                    return;
+                  }
 
-                setApplying(true);
-                const { data: userData } = await supabase.auth.getUser();
-                const user = userData?.user ?? null;
-                if (!user) {
-                  setApplying(false);
-                  router.push('/login');
-                  return;
-                }
+                  let cv_url: string | null = null;
+                  try {
+                    if (cvFile) {
+                      const path = `${user.id}/${Date.now()}_${cvFile.name}`;
+                      const upload = await supabase.storage.from('cvs').upload(path, cvFile, { cacheControl: '3600', upsert: false });
+                      if (upload.error) {
+                        console.warn('CV upload error', upload.error);
+                      } else {
+                        const { data: publicUrlData } = supabase.storage.from('cvs').getPublicUrl(path);
+                        cv_url = publicUrlData?.publicUrl ?? null;
+                      }
+                    }
 
-                try {
-                  const { error: insertError } = await supabase.from('applications').insert({ job_id: job.id, user_id: user.id, created_at: new Date().toISOString() });
-                  if (insertError) throw insertError;
-                  router.push('/applications');
-                } catch (e: any) {
-                  console.error('Apply error', e);
-                  alert('Wystąpił błąd podczas aplikowania.');
-                } finally {
-                  setApplying(false);
-                }
-              }}
-              disabled={applying}
-              className="inline-block bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              {applying ? 'Aplikowanie...' : 'Aplikuj'}
-            </button>
+                    const payload: any = {
+                      job_id: job.id,
+                      user_id: user.id,
+                      expected_salary: expectedSalary || null,
+                      start_date: startDate || null,
+                      cv_url: cv_url,
+                      cv_text: cvText || null,
+                      created_at: new Date().toISOString(),
+                    };
+
+                    const { error: insertError } = await supabase.from('applications').insert(payload);
+                    if (insertError) throw insertError;
+                    router.push('/applications');
+                  } catch (err: any) {
+                    console.error('Apply error', err);
+                    const errMsg = err?.message ?? JSON.stringify(err);
+                    alert('Wystąpił błąd podczas wysyłania aplikacji: ' + errMsg);
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                className="space-y-3 bg-gray-50 p-4 rounded"
+              >
+                <div>
+                  <label className="text-sm text-black/70">Oczekiwana pensja</label>
+                  <input value={expectedSalary} onChange={(e) => setExpectedSalary(e.target.value)} placeholder="np. 8000 PLN" className="w-full mt-1 p-2 border rounded" />
+                </div>
+
+                <div>
+                  <label className="text-sm text-black/70">Kiedy możesz zacząć</label>
+                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full mt-1 p-2 border rounded" />
+                </div>
+
+                <div>
+                  <label className="text-sm text-black/70">Dodaj CV (plik)</label>
+                  <input type="file" onChange={(e) => setCvFile(e.target.files?.[0] ?? null)} className="w-full mt-1" />
+                </div>
+
+                <div>
+                  <label className="text-sm text-black/70">Lub wklej treść CV / link</label>
+                  <textarea value={cvText} onChange={(e) => setCvText(e.target.value)} rows={4} className="w-full mt-1 p-2 border rounded" />
+                </div>
+
+                <div className="flex gap-2">
+                  <button type="submit" disabled={submitting} className="bg-green-600 text-white px-4 py-2 rounded">{submitting ? 'Wysyłanie...' : 'Wyślij aplikację'}</button>
+                  <button type="button" onClick={() => setShowApplyForm(false)} disabled={submitting} className="bg-gray-200 px-4 py-2 rounded">Anuluj</button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </div>
