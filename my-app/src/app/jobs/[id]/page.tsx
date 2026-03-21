@@ -88,6 +88,8 @@ export default function JobDetailPage() {
 
               <div className="text-xs text-black/60">Opublikowano</div>
               <div className="text-sm mb-2">{createdAt ?? '—'}</div>
+              <div className="text-xs text-black/60">Wygasa</div>
+              <div className="text-sm mb-2">{job.expires_at ? new Date(job.expires_at).toLocaleString() : '—'}</div>
               <div className="text-xs text-black/60">Wyświetlenia</div>
               <div className="text-sm">{job.views ?? 0}</div>
             </aside>
