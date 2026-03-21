@@ -7,18 +7,39 @@ import { supabase } from '../../lib/supabaseClient';
 
 export default function Header() {
   const [user, setUser] = useState<any | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
+
+  const getIsAdmin = (u: any | null) => {
+    if (!u) return false;
+    const email = String(u.email ?? '').toLowerCase();
+    const userMetadata = u.user_metadata ?? {};
+    const appMetadata = u.app_metadata ?? {};
+    const role = userMetadata.role ?? appMetadata.role ?? null;
+    const roles = userMetadata.roles ?? appMetadata.roles ?? [];
+    const fromEnvAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    return (
+      role === 'admin' ||
+      (Array.isArray(roles) && roles.includes('admin')) ||
+      email === String(fromEnvAdminEmail?.toLowerCase() ?? '')
+    );
+  };
 
   useEffect(() => {
     let mounted = true;
     const init = async () => {
       const { data } = await supabase.auth.getUser();
-      if (mounted) setUser(data?.user ?? null);
+      if (!mounted) return;
+      const u = data?.user ?? null;
+      setUser(u);
+      setIsAdmin(getIsAdmin(u));
     };
     init();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const u = session?.user ?? null;
+      setUser(u);
+      setIsAdmin(getIsAdmin(u));
     });
 
     return () => {
@@ -41,7 +62,12 @@ export default function Header() {
 
         <nav className="hidden md:flex items-center gap-6 text-sm">
           {user && (
-            <Link href="/applications" className="text-black hover:text-gray-700">Moje aplikacje</Link>
+            <>
+              <Link href="/applications" className="text-black hover:text-gray-700">Moje aplikacje</Link>
+              {isAdmin ? (
+                <Link href="/admin" className="text-black hover:text-gray-700">Panel admina</Link>
+              ) : null}
+            </>
           )}
         </nav>
 
