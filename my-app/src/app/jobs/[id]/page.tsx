@@ -33,6 +33,22 @@ export default function JobDetailPage() {
       } else {
         setJob(data ?? null);
         setError(null);
+        
+        // Inkrementuj views
+        if (data?.id) {
+          try {
+            const currentViews = data?.views ?? 0;
+            const { error: updateError } = await supabase
+              .from('jobs')
+              .update({ views: currentViews + 1 })
+              .eq('id', data.id);
+            if (updateError) {
+              console.error('Error incrementing views:', updateError);
+            }
+          } catch (err) {
+            console.error('Error incrementing views:', err);
+          }
+        }
       }
       setLoading(false);
     };
@@ -40,145 +56,248 @@ export default function JobDetailPage() {
     return () => { mounted = false };
   }, [id]);
 
-  if (loading) return <div className="max-w-3xl mx-auto">Ładowanie...</div>;
-  if (error) return <div className="max-w-3xl mx-auto text-red-600">Błąd: {error}</div>;
-  if (!job) return <div className="max-w-3xl mx-auto">Nie znaleziono oferty.</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-gray-600">Ładowanie oferty...</div>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-red-600">Błąd: {error}</div>
+    </div>
+  );
+  
+  if (!job) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-gray-600">Nie znaleziono oferty.</div>
+    </div>
+  );
+  
   const createdAt = job.created_at ? new Date(job.created_at).toLocaleString() : null;
+  
   return (
     <div className="min-h-screen bg-gray-50">
-      <section className="hero-gradient rounded-2xl mx-6 my-8 p-8 md:p-12">
+      {/* Header */}
+      <section className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-12 px-4">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold text-gray-900">{job.title}</h1>
-          <div className="mt-2 text-sm text-black/80">{job.company} • {job.location ?? 'Zdalnie'}</div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">{job.title}</h1>
+          <div className="flex flex-wrap items-center gap-4 text-purple-100">
+            <span className="text-lg">{job.company}</span>
+            <span>•</span>
+            <span className="text-lg">{job.location ?? 'Zdalnie'}</span>
+          </div>
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex flex-col md:flex-row md:justify-between gap-4">
-            <div>
-              <div className="text-sm text-black/80 mb-2">{job.employment_type ?? ''} {job.is_remote ? '• Zdalnie' : ''}</div>
-              <div className="prose max-w-none mb-4">{job.description}</div>
-            </div>
-            <aside className="w-full md:w-64">
-              {job.salary_from || job.salary_to ? (
-                <div className="mb-4">
-                  <div className="text-xs text-black/60">Wynagrodzenie</div>
-                  <div className="font-semibold">{job.salary_from ?? '—'}{job.salary_from && job.salary_to ? ' – ' + job.salary_to : ''} {job.salary_to ? '' : ''}</div>
-                </div>
-              ) : null}
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Główna zawartość */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 mb-8">
+              <div className="flex flex-wrap gap-2 mb-6 items-center">
+                {job.employment_type && (
+                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                    {job.employment_type}
+                  </span>
+                )}
+                {job.is_remote && (
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+                    🌐 Zdalnie
+                  </span>
+                )}
+              </div>
 
-              {job.contact_email ? (
-                <div className="mb-4">
-                  <div className="text-xs text-black/60">Kontakt</div>
-                  <a href={`mailto:${job.contact_email}`} className="text-blue-600">{job.contact_email}</a>
-                </div>
-              ) : null}
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">O tej ofercie</h2>
+              <div className="prose prose-sm max-w-none text-gray-700 mb-8 leading-relaxed">
+                {job.description || 'Brak opisu'}
+              </div>
 
-              {job.tags && Array.isArray(job.tags) && job.tags.length > 0 ? (
-                <div className="mb-4">
-                  <div className="text-xs text-black/60">Tagi</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
+              {job.tags && Array.isArray(job.tags) && job.tags.length > 0 && (
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-3">Wymagane umiejętności</h3>
+                  <div className="flex flex-wrap gap-2">
                     {job.tags.map((t: string) => (
-                      <span key={t} className="text-xs bg-white shadow-sm px-2 py-1 rounded">{t}</span>
+                      <span key={t} className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                        {t}
+                      </span>
                     ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Formularz aplikacji */}
+            {!showApplyForm ? (
+              <div className="text-center py-8">
+                <button
+                  onClick={() => setShowApplyForm(true)}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-shadow text-lg"
+                >
+                  Aplikuj na tę ofertę
+                </button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Twoja aplikacja</h3>
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!job) return;
+                    setSubmitting(true);
+                    const { data: userData } = await supabase.auth.getUser();
+                    const user = userData?.user ?? null;
+                    if (!user) {
+                      setSubmitting(false);
+                      router.push('/login');
+                      return;
+                    }
+
+                    let cv_url: string | null = null;
+                    try {
+                      if (cvFile) {
+                        const path = `${user.id}/${Date.now()}_${cvFile.name}`;
+                        const upload = await supabase.storage.from('cvs').upload(path, cvFile, { cacheControl: '3600', upsert: false });
+                        if (upload.error) {
+                          console.warn('CV upload error', upload.error);
+                        } else {
+                          const { data: publicUrlData } = supabase.storage.from('cvs').getPublicUrl(path);
+                          cv_url = publicUrlData?.publicUrl ?? null;
+                        }
+                      }
+
+                      const payload: any = {
+                        job_id: job.id,
+                        user_id: user.id,
+                        expected_salary: expectedSalary || null,
+                        start_date: startDate || null,
+                        cv_url: cv_url,
+                        cv_text: cvText || null,
+                        created_at: new Date().toISOString(),
+                      };
+
+                      const { error: insertError } = await supabase.from('applications').insert(payload);
+                      if (insertError) throw insertError;
+                      router.push('/applications');
+                    } catch (err: any) {
+                      console.error('Apply error', err);
+                      const errMsg = err?.message ?? JSON.stringify(err);
+                      alert('Wystąpił błąd podczas wysyłania aplikacji: ' + errMsg);
+                    } finally {
+                      setSubmitting(false);
+                    }
+                  }}
+                  className="space-y-6"
+                >
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Oczekiwana pensja</label>
+                    <input 
+                      type="text"
+                      value={expectedSalary} 
+                      onChange={(e) => setExpectedSalary(e.target.value)} 
+                      placeholder="np. 8000 PLN" 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Kiedy możesz zacząć</label>
+                    <input 
+                      type="date" 
+                      value={startDate} 
+                      onChange={(e) => setStartDate(e.target.value)} 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Dodaj CV (plik PDF/DOCX)</label>
+                    <input 
+                      type="file" 
+                      onChange={(e) => setCvFile(e.target.files?.[0] ?? null)} 
+                      accept=".pdf,.doc,.docx"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Lub wklej CV / link do profilu</label>
+                    <textarea 
+                      value={cvText} 
+                      onChange={(e) => setCvText(e.target.value)} 
+                      rows={4} 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition resize-none"
+                      placeholder="Możesz wkleić link do CV lub krótki tekst o sobie"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button 
+                      type="submit" 
+                      disabled={submitting} 
+                      className="flex-1 bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg disabled:from-gray-400 disabled:to-gray-400 transition-shadow"
+                    >
+                      {submitting ? '⏳ Wysyłanie...' : '✓ Wyślij aplikację'}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowApplyForm(false)} 
+                      disabled={submitting} 
+                      className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
+                    >
+                      Anuluj
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
+              <h3 className="font-bold text-lg text-gray-900 mb-6">Szczegóły oferty</h3>
+
+              {job.salary_from || job.salary_to ? (
+                <div className="mb-6 pb-6 border-b border-gray-200">
+                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Wynagrodzenie</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {job.salary_from && job.salary_to 
+                      ? `${job.salary_from}–${job.salary_to} PLN`
+                      : job.salary_from 
+                      ? `od ${job.salary_from} PLN`
+                      : `do ${job.salary_to} PLN`
+                    }
                   </div>
                 </div>
               ) : null}
 
-              <div className="text-xs text-black/60">Opublikowano</div>
-              <div className="text-sm mb-2">{createdAt ?? '—'}</div>
-              <div className="text-xs text-black/60">Wygasa</div>
-              <div className="text-sm mb-2">{job.expires_at ? new Date(job.expires_at).toLocaleString() : '—'}</div>
-              <div className="text-xs text-black/60">Wyświetlenia</div>
-              <div className="text-sm">{job.views ?? 0}</div>
-            </aside>
-          </div>
-
-          <div className="mt-6">
-            {!showApplyForm ? (
-              <button
-                onClick={() => setShowApplyForm(true)}
-                className="inline-block bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                Aplikuj
-              </button>
-            ) : (
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!job) return;
-                  setSubmitting(true);
-                  const { data: userData } = await supabase.auth.getUser();
-                  const user = userData?.user ?? null;
-                  if (!user) {
-                    setSubmitting(false);
-                    router.push('/login');
-                    return;
-                  }
-
-                  let cv_url: string | null = null;
-                  try {
-                    if (cvFile) {
-                      const path = `${user.id}/${Date.now()}_${cvFile.name}`;
-                      const upload = await supabase.storage.from('cvs').upload(path, cvFile, { cacheControl: '3600', upsert: false });
-                      if (upload.error) {
-                        console.warn('CV upload error', upload.error);
-                      } else {
-                        const { data: publicUrlData } = supabase.storage.from('cvs').getPublicUrl(path);
-                        cv_url = publicUrlData?.publicUrl ?? null;
-                      }
-                    }
-
-                    const payload: any = {
-                      job_id: job.id,
-                      user_id: user.id,
-                      expected_salary: expectedSalary || null,
-                      start_date: startDate || null,
-                      cv_url: cv_url,
-                      cv_text: cvText || null,
-                      created_at: new Date().toISOString(),
-                    };
-
-                    const { error: insertError } = await supabase.from('applications').insert(payload);
-                    if (insertError) throw insertError;
-                    router.push('/applications');
-                  } catch (err: any) {
-                    console.error('Apply error', err);
-                    const errMsg = err?.message ?? JSON.stringify(err);
-                    alert('Wystąpił błąd podczas wysyłania aplikacji: ' + errMsg);
-                  } finally {
-                    setSubmitting(false);
-                  }
-                }}
-                className="space-y-3 bg-gray-50 p-4 rounded"
-              >
-                <div>
-                  <label className="text-sm text-black/70">Oczekiwana pensja</label>
-                  <input value={expectedSalary} onChange={(e) => setExpectedSalary(e.target.value)} placeholder="np. 8000 PLN" className="w-full mt-1 p-2 border rounded" />
+              {job.contact_email ? (
+                <div className="mb-6 pb-6 border-b border-gray-200">
+                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Kontakt</div>
+                  <a href={`mailto:${job.contact_email}`} className="text-purple-600 hover:text-purple-700 font-semibold break-all">
+                    {job.contact_email}
+                  </a>
                 </div>
+              ) : null}
 
-                <div>
-                  <label className="text-sm text-black/70">Kiedy możesz zacząć</label>
-                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full mt-1 p-2 border rounded" />
-                </div>
+              <div className="mb-6 pb-6 border-b border-gray-200">
+                <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Opublikowano</div>
+                <div className="text-sm text-gray-700">{createdAt ?? '—'}</div>
+              </div>
 
-                <div>
-                  <label className="text-sm text-black/70">Dodaj CV (plik)</label>
-                  <input type="file" onChange={(e) => setCvFile(e.target.files?.[0] ?? null)} className="w-full mt-1" />
+              {job.expires_at && (
+                <div className="mb-6 pb-6 border-b border-gray-200">
+                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Wygasa</div>
+                  <div className="text-sm text-gray-700">{new Date(job.expires_at).toLocaleString()}</div>
                 </div>
+              )}
 
-                <div>
-                  <label className="text-sm text-black/70">Lub wklej treść CV / link</label>
-                  <textarea value={cvText} onChange={(e) => setCvText(e.target.value)} rows={4} className="w-full mt-1 p-2 border rounded" />
-                </div>
-
-                <div className="flex gap-2">
-                  <button type="submit" disabled={submitting} className="bg-green-600 text-white px-4 py-2 rounded">{submitting ? 'Wysyłanie...' : 'Wyślij aplikację'}</button>
-                  <button type="button" onClick={() => setShowApplyForm(false)} disabled={submitting} className="bg-gray-200 px-4 py-2 rounded">Anuluj</button>
-                </div>
-              </form>
-            )}
+              <div>
+                <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Wyświetlenia</div>
+                <div className="text-2xl font-bold text-gray-900">{job.views ?? 0}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

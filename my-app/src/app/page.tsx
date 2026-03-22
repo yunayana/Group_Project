@@ -74,12 +74,12 @@ export default function Home() {
             <div className="mt-4 flex items-center max-w-2xl mx-auto md:mx-0 gap-2">
               <input placeholder="Szukaj: Stanowisko, firma, słowo kluczowe" value={query} onChange={e => setQuery(e.target.value)} className="flex-1 rounded-full p-3 border" />
               <input placeholder="Lokalizacja" value={locationQuery} onChange={e => setLocationQuery(e.target.value)} className="w-48 rounded-full p-3 border" />
-              <button onClick={() => {}} className="bg-gradient-to-r from-pink-500 to-purple-500 text-black px-6 py-3 rounded-full shadow-sm">Szukaj</button>
+              <button onClick={() => {}} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-full shadow-sm hover:shadow-lg transition-shadow font-medium">Szukaj</button>
             </div>
           </div>
 
           <div className="hidden md:block flex-1">
-            <div className="h-56 bg-white/30 rounded-2xl"></div>
+            <img src="/images/glowna.gif" alt="Job Portal Hero" className="w-full h-56 object-cover rounded-2xl shadow-lg" />
           </div>
         </div>
       </section>

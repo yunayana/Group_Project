@@ -2,8 +2,13 @@ import './globals.css';
 import Header from '../components/Header';
 
 export const metadata = {
-  title: 'Portal Pracy',
+  title: 'Job Portal - Portal Pracy',
   description: 'Prosty portal pracy',
+  icons: {
+    icon: '/images/logo.png',
+    shortcut: '/images/logo.png',
+    apple: '/images/logo.png',
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

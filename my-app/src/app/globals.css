@@ -34,6 +34,11 @@ input, textarea, select, button {
 }
 ::placeholder { color: #000 !important; opacity: 1; }
 
+/* White text for headings on applications page */
+.text-white {
+  color: #fff !important;
+}
+
 .hero-gradient {
   background: linear-gradient(90deg, #ffd6cf 0%, #e9d7ff 100%);
   padding: 2rem;
