@@ -1,31 +1,30 @@
-"use client"
-import { useEffect, useState } from "react"
-import { supabase } from "../../../../lib/supabaseClient"
-
+"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 interface Stats {
-  totalUsers: number
-  totalJobs: number
-  totalApplications: number
-  activeJobs: number
+  totalUsers: number;
+  totalJobs: number;
+  totalApplications: number;
+  activeJobs: number;
 }
 
 interface Account {
-  id: string
-  email: string
-  username: string | null
-  role: string | null
-  is_blocked: boolean
-  created_at: string
+  id: string;
+  email: string;
+  username: string | null;
+  role: string | null;
+  is_blocked: boolean;
+  created_at: string;
 }
 
 interface Application {
-  id: string
-  job_id: string
-  created_at: string
-  expected_salary: string | null
-  start_date: string | null
-  status: string | null
-  cv_text: string | null
+  id: string;
+  job_id: string;
+  created_at: string;
+  expected_salary: string | null;
+  start_date: string | null;
+  status: string | null;
+  cv_text: string | null;
 }
 
 export default function KontaPage() {
@@ -34,121 +33,117 @@ export default function KontaPage() {
     totalJobs: 0,
     totalApplications: 0,
     activeJobs: 0,
-  })
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [loading, setLoading] = useState(true)
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
+  });
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
-  const [applications, setApplications] = useState<Application[]>([])
-  const [appsLoading, setAppsLoading] = useState(false)
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [appsLoading, setAppsLoading] = useState(false);
 
   const fetchStats = async () => {
     try {
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("*");
       const totalUsers =
-        !profilesError && Array.isArray(profilesData)
-          ? profilesData.length
-          : 0
+        !profilesError && Array.isArray(profilesData) ? profilesData.length : 0;
 
-      const { data: jobsData } = await supabase.from("jobs").select("*")
-      const totalJobs = Array.isArray(jobsData) ? jobsData.length : 0
+      const { data: jobsData } = await supabase.from("jobs").select("*");
+      const totalJobs = Array.isArray(jobsData) ? jobsData.length : 0;
 
       const { data: appsData } = await supabase
         .from("applications")
-        .select("*")
-      const totalApplications = Array.isArray(appsData)
-        ? appsData.length
-        : 0
+        .select("*");
+      const totalApplications = Array.isArray(appsData) ? appsData.length : 0;
 
       const { data: activeJobsData } = await supabase
         .from("jobs")
         .select("*")
         .eq("is_published", true)
-        .gte("expires_at", new Date().toISOString())
+        .gte("expires_at", new Date().toISOString());
       const activeJobs = Array.isArray(activeJobsData)
         ? activeJobsData.length
-        : 0
+        : 0;
 
-      setStats({ totalUsers, totalJobs, totalApplications, activeJobs })
+      setStats({ totalUsers, totalJobs, totalApplications, activeJobs });
     } catch (error) {
-      console.error("❌ BŁĄD statystyk:", error)
+      console.error("❌ BŁĄD statystyk:", error);
     }
-  }
+  };
 
   const fetchAccounts = async () => {
     const { data, error } = await supabase
       .from("profiles")
       .select("id, email, username, role, is_blocked, created_at")
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("❌ BŁĄD ładowania kont:", error)
-      setAccounts([])
+      console.error("❌ BŁĄD ładowania kont:", error);
+      setAccounts([]);
     } else {
-      setAccounts((data || []) as Account[])
+      setAccounts((data || []) as Account[]);
     }
-  }
+  };
 
   const fetchApplicationsForUser = async (userId: string) => {
     try {
-      setAppsLoading(true)
+      setAppsLoading(true);
       const { data, error } = await supabase
         .from("applications")
         .select(
           "id, job_id, created_at, expected_salary, start_date, status, cv_text",
         )
         .eq("user_id", userId)
-        .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("❌ BŁĄD ładowania aplikacji:", error)
-        setApplications([])
+        console.error("❌ BŁĄD ładowania aplikacji:", error);
+        setApplications([]);
       } else {
-        setApplications((data || []) as Application[])
+        setApplications((data || []) as Application[]);
       }
     } finally {
-      setAppsLoading(false)
+      setAppsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true)
-      await Promise.all([fetchStats(), fetchAccounts()])
-      setLoading(false)
-    }
-    load()
-  }, [])
+      setLoading(true);
+      await Promise.all([fetchStats(), fetchAccounts()]);
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   const handleChangeRole = async (id: string, newRole: "user" | "admin") => {
     const ok = window.confirm(
       `Na pewno zmienić rolę użytkownika na "${newRole}"?`,
-    )
-    if (!ok) return
+    );
+    if (!ok) return;
 
     try {
-      setActionLoadingId(id)
+      setActionLoadingId(id);
       const { error } = await supabase
         .from("profiles")
         .update({ role: newRole })
-        .eq("id", id)
+        .eq("id", id);
 
       if (error) {
-        console.error("❌ BŁĄD zmiany roli:", error)
-        return
+        console.error("❌ BŁĄD zmiany roli:", error);
+        return;
       }
 
-      setAccounts(prev =>
-        prev.map(acc => (acc.id === id ? { ...acc, role: newRole } : acc)),
-      )
-      fetchStats()
+      setAccounts((prev) =>
+        prev.map((acc) => (acc.id === id ? { ...acc, role: newRole } : acc)),
+      );
+      fetchStats();
     } finally {
-      setActionLoadingId(null)
+      setActionLoadingId(null);
     }
-  }
+  };
 
   const handleToggleBlock = async (
     id: string,
@@ -159,64 +154,61 @@ export default function KontaPage() {
       current
         ? `Czy na pewno chcesz ODBLOKOWAĆ użytkownika ${label}?`
         : `Czy na pewno chcesz ZABLOKOWAĆ użytkownika ${label}?`,
-    )
-    if (!first) return
+    );
+    if (!first) return;
 
     try {
-      setActionLoadingId(id)
+      setActionLoadingId(id);
       const { error } = await supabase
         .from("profiles")
         .update({ is_blocked: !current })
-        .eq("id", id)
+        .eq("id", id);
 
       if (error) {
-        console.error("❌ BŁĄD blokowania:", error)
-        return
+        console.error("❌ BŁĄD blokowania:", error);
+        return;
       }
 
-      setAccounts(prev =>
-        prev.map(acc =>
+      setAccounts((prev) =>
+        prev.map((acc) =>
           acc.id === id ? { ...acc, is_blocked: !current } : acc,
         ),
-      )
+      );
     } finally {
-      setActionLoadingId(null)
+      setActionLoadingId(null);
     }
-  }
+  };
 
   const handleDeleteAccount = async (id: string, label: string) => {
     const first = window.confirm(
       `Czy NA PEWNO chcesz TRWALE usunąć konto ${label}?`,
-    )
-    if (!first) return
+    );
+    if (!first) return;
     const second = window.confirm(
       "To działanie jest nieodwracalne. Potwierdź usunięcie.",
-    )
-    if (!second) return
+    );
+    if (!second) return;
 
     try {
-      setActionLoadingId(id)
-      const { error } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", id)
+      setActionLoadingId(id);
+      const { error } = await supabase.from("profiles").delete().eq("id", id);
 
       if (error) {
-        console.error("❌ BŁĄD usuwania konta:", error)
-        return
+        console.error("❌ BŁĄD usuwania konta:", error);
+        return;
       }
 
-      setAccounts(prev => prev.filter(acc => acc.id !== id))
-      fetchStats()
+      setAccounts((prev) => prev.filter((acc) => acc.id !== id));
+      fetchStats();
     } finally {
-      setActionLoadingId(null)
+      setActionLoadingId(null);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="text-center py-12">Ładowanie statystyk i kont...</div>
-    )
+    );
   }
 
   return (
@@ -237,9 +229,7 @@ export default function KontaPage() {
             <div className="text-green-100 mt-1">Ogłoszeń</div>
           </div>
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-black p-8 rounded-xl">
-            <div className="text-3xl font-bold">
-              {stats.totalApplications}
-            </div>
+            <div className="text-3xl font-bold">{stats.totalApplications}</div>
             <div className="text-purple-100 mt-1">Aplikacji</div>
           </div>
           <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-black p-8 rounded-xl">
@@ -280,8 +270,8 @@ export default function KontaPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {accounts.map(acc => {
-                const label = acc.username || acc.email || acc.id
+              {accounts.map((acc) => {
+                const label = acc.username || acc.email || acc.id;
                 return (
                   <tr key={acc.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
@@ -296,7 +286,7 @@ export default function KontaPage() {
                     <td className="px-4 py-3">
                       <select
                         value={acc.role || "user"}
-                        onChange={e =>
+                        onChange={(e) =>
                           handleChangeRole(
                             acc.id,
                             e.target.value as "user" | "admin",
@@ -348,8 +338,8 @@ export default function KontaPage() {
 
                       <button
                         onClick={async () => {
-                          setSelectedAccount(acc)
-                          await fetchApplicationsForUser(acc.id)
+                          setSelectedAccount(acc);
+                          await fetchApplicationsForUser(acc.id);
                         }}
                         className="px-3 py-1 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700"
                       >
@@ -357,7 +347,7 @@ export default function KontaPage() {
                       </button>
                     </td>
                   </tr>
-                )
+                );
               })}
 
               {accounts.length === 0 && (
@@ -382,9 +372,7 @@ export default function KontaPage() {
             </h3>
 
             {appsLoading ? (
-              <div className="text-gray-500 text-sm">
-                Ładowanie zgłoszeń...
-              </div>
+              <div className="text-gray-500 text-sm">Ładowanie zgłoszeń...</div>
             ) : applications.length === 0 ? (
               <div className="text-gray-500 text-sm">
                 Ten użytkownik nie ma jeszcze zgłoszeń.
@@ -415,15 +403,13 @@ export default function KontaPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {applications.map(app => (
+                    {applications.map((app) => (
                       <tr key={app.id} className="hover:bg-gray-50">
                         <td className="px-3 py-2 text-gray-900">
                           {app.job_id.slice(0, 8)}…
                         </td>
                         <td className="px-3 py-2 text-gray-900">
-                          {new Date(app.created_at).toLocaleDateString(
-                            "pl-PL",
-                          )}
+                          {new Date(app.created_at).toLocaleDateString("pl-PL")}
                         </td>
                         <td className="px-3 py-2 text-gray-900">
                           {app.status || "—"}
@@ -446,8 +432,8 @@ export default function KontaPage() {
 
             <button
               onClick={() => {
-                setSelectedAccount(null)
-                setApplications([])
+                setSelectedAccount(null);
+                setApplications([]);
               }}
               className="mt-4 px-4 py-1 text-xs rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
             >
@@ -457,5 +443,5 @@ export default function KontaPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { supabase } from '../../../../lib/supabaseClient';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -14,10 +14,10 @@ export default function JobDetailPage() {
   const router = useRouter();
   const [applying, setApplying] = useState(false);
   const [showApplyForm, setShowApplyForm] = useState(false);
-  const [expectedSalary, setExpectedSalary] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
+  const [expectedSalary, setExpectedSalary] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
   const [cvFile, setCvFile] = useState<File | null>(null);
-  const [cvText, setCvText] = useState<string>('');
+  const [cvText, setCvText] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -25,7 +25,11 @@ export default function JobDetailPage() {
     let mounted = true;
     const fetchJob = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from('jobs').select('*').eq('id', id).single();
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("id", id)
+        .single();
       if (!mounted) return;
       if (error) {
         setError(error.message ?? String(error));
@@ -33,49 +37,56 @@ export default function JobDetailPage() {
       } else {
         setJob(data ?? null);
         setError(null);
-        
+
         // Inkrementuj views
         if (data?.id) {
           try {
             const currentViews = data?.views ?? 0;
             const { error: updateError } = await supabase
-              .from('jobs')
+              .from("jobs")
               .update({ views: currentViews + 1 })
-              .eq('id', data.id);
+              .eq("id", data.id);
             if (updateError) {
-              console.error('Error incrementing views:', updateError);
+              console.error("Error incrementing views:", updateError);
             }
           } catch (err) {
-            console.error('Error incrementing views:', err);
+            console.error("Error incrementing views:", err);
           }
         }
       }
       setLoading(false);
     };
     fetchJob();
-    return () => { mounted = false };
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
-  if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-gray-600">Ładowanie oferty...</div>
-    </div>
-  );
-  
-  if (error) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-red-600">Błąd: {error}</div>
-    </div>
-  );
-  
-  if (!job) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-gray-600">Nie znaleziono oferty.</div>
-    </div>
-  );
-  
-  const createdAt = job.created_at ? new Date(job.created_at).toLocaleString() : null;
-  
+  if (loading)
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Ładowanie oferty...</div>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-red-600">Błąd: {error}</div>
+      </div>
+    );
+
+  if (!job)
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Nie znaleziono oferty.</div>
+      </div>
+    );
+
+  const createdAt = job.created_at
+    ? new Date(job.created_at).toLocaleString()
+    : null;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -85,7 +96,7 @@ export default function JobDetailPage() {
           <div className="flex flex-wrap items-center gap-4 text-purple-100">
             <span className="text-lg">{job.company}</span>
             <span>•</span>
-            <span className="text-lg">{job.location ?? 'Zdalnie'}</span>
+            <span className="text-lg">{job.location ?? "Zdalnie"}</span>
           </div>
         </div>
       </section>
@@ -108,17 +119,24 @@ export default function JobDetailPage() {
                 )}
               </div>
 
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">O tej ofercie</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                O tej ofercie
+              </h2>
               <div className="prose prose-sm max-w-none text-gray-700 mb-8 leading-relaxed">
-                {job.description || 'Brak opisu'}
+                {job.description || "Brak opisu"}
               </div>
 
               {job.tags && Array.isArray(job.tags) && job.tags.length > 0 && (
                 <div className="mt-8 pt-8 border-t border-gray-200">
-                  <h3 className="font-semibold text-gray-900 mb-3">Wymagane umiejętności</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">
+                    Wymagane umiejętności
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {job.tags.map((t: string) => (
-                      <span key={t} className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                      <span
+                        key={t}
+                        className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm"
+                      >
                         {t}
                       </span>
                     ))}
@@ -139,7 +157,9 @@ export default function JobDetailPage() {
               </div>
             ) : (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Twoja aplikacja</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                  Twoja aplikacja
+                </h3>
                 <form
                   onSubmit={async (e) => {
                     e.preventDefault();
@@ -149,7 +169,7 @@ export default function JobDetailPage() {
                     const user = userData?.user ?? null;
                     if (!user) {
                       setSubmitting(false);
-                      router.push('/login');
+                      router.push("/login");
                       return;
                     }
 
@@ -157,11 +177,18 @@ export default function JobDetailPage() {
                     try {
                       if (cvFile) {
                         const path = `${user.id}/${Date.now()}_${cvFile.name}`;
-                        const upload = await supabase.storage.from('cvs').upload(path, cvFile, { cacheControl: '3600', upsert: false });
+                        const upload = await supabase.storage
+                          .from("cvs")
+                          .upload(path, cvFile, {
+                            cacheControl: "3600",
+                            upsert: false,
+                          });
                         if (upload.error) {
-                          console.warn('CV upload error', upload.error);
+                          console.warn("CV upload error", upload.error);
                         } else {
-                          const { data: publicUrlData } = supabase.storage.from('cvs').getPublicUrl(path);
+                          const { data: publicUrlData } = supabase.storage
+                            .from("cvs")
+                            .getPublicUrl(path);
                           cv_url = publicUrlData?.publicUrl ?? null;
                         }
                       }
@@ -176,13 +203,17 @@ export default function JobDetailPage() {
                         created_at: new Date().toISOString(),
                       };
 
-                      const { error: insertError } = await supabase.from('applications').insert(payload);
+                      const { error: insertError } = await supabase
+                        .from("applications")
+                        .insert(payload);
                       if (insertError) throw insertError;
-                      router.push('/applications');
+                      router.push("/applications");
                     } catch (err: any) {
-                      console.error('Apply error', err);
+                      console.error("Apply error", err);
                       const errMsg = err?.message ?? JSON.stringify(err);
-                      alert('Wystąpił błąd podczas wysyłania aplikacji: ' + errMsg);
+                      alert(
+                        "Wystąpił błąd podczas wysyłania aplikacji: " + errMsg,
+                      );
                     } finally {
                       setSubmitting(false);
                     }
@@ -190,59 +221,67 @@ export default function JobDetailPage() {
                   className="space-y-6"
                 >
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Oczekiwana pensja</label>
-                    <input 
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Oczekiwana pensja
+                    </label>
+                    <input
                       type="text"
-                      value={expectedSalary} 
-                      onChange={(e) => setExpectedSalary(e.target.value)} 
-                      placeholder="np. 8000 PLN" 
+                      value={expectedSalary}
+                      onChange={(e) => setExpectedSalary(e.target.value)}
+                      placeholder="np. 8000 PLN"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Kiedy możesz zacząć</label>
-                    <input 
-                      type="date" 
-                      value={startDate} 
-                      onChange={(e) => setStartDate(e.target.value)} 
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Kiedy możesz zacząć
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Dodaj CV (plik PDF/DOCX)</label>
-                    <input 
-                      type="file" 
-                      onChange={(e) => setCvFile(e.target.files?.[0] ?? null)} 
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Dodaj CV (plik PDF/DOCX)
+                    </label>
+                    <input
+                      type="file"
+                      onChange={(e) => setCvFile(e.target.files?.[0] ?? null)}
                       accept=".pdf,.doc,.docx"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Lub wklej CV / link do profilu</label>
-                    <textarea 
-                      value={cvText} 
-                      onChange={(e) => setCvText(e.target.value)} 
-                      rows={4} 
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Lub wklej CV / link do profilu
+                    </label>
+                    <textarea
+                      value={cvText}
+                      onChange={(e) => setCvText(e.target.value)}
+                      rows={4}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition resize-none"
                       placeholder="Możesz wkleić link do CV lub krótki tekst o sobie"
                     />
                   </div>
 
                   <div className="flex gap-3 pt-4">
-                    <button 
-                      type="submit" 
-                      disabled={submitting} 
+                    <button
+                      type="submit"
+                      disabled={submitting}
                       className="flex-1 bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg disabled:from-gray-400 disabled:to-gray-400 transition-shadow"
                     >
-                      {submitting ? '⏳ Wysyłanie...' : '✓ Wyślij aplikację'}
+                      {submitting ? "⏳ Wysyłanie..." : "✓ Wyślij aplikację"}
                     </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setShowApplyForm(false)} 
-                      disabled={submitting} 
+                    <button
+                      type="button"
+                      onClick={() => setShowApplyForm(false)}
+                      disabled={submitting}
                       className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition"
                     >
                       Anuluj
@@ -256,46 +295,64 @@ export default function JobDetailPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
-              <h3 className="font-bold text-lg text-gray-900 mb-6">Szczegóły oferty</h3>
+              <h3 className="font-bold text-lg text-gray-900 mb-6">
+                Szczegóły oferty
+              </h3>
 
               {job.salary_from || job.salary_to ? (
                 <div className="mb-6 pb-6 border-b border-gray-200">
-                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Wynagrodzenie</div>
+                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                    Wynagrodzenie
+                  </div>
                   <div className="text-2xl font-bold text-green-600">
-                    {job.salary_from && job.salary_to 
+                    {job.salary_from && job.salary_to
                       ? `${job.salary_from}–${job.salary_to} PLN`
-                      : job.salary_from 
-                      ? `od ${job.salary_from} PLN`
-                      : `do ${job.salary_to} PLN`
-                    }
+                      : job.salary_from
+                        ? `od ${job.salary_from} PLN`
+                        : `do ${job.salary_to} PLN`}
                   </div>
                 </div>
               ) : null}
 
               {job.contact_email ? (
                 <div className="mb-6 pb-6 border-b border-gray-200">
-                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Kontakt</div>
-                  <a href={`mailto:${job.contact_email}`} className="text-purple-600 hover:text-purple-700 font-semibold break-all">
+                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                    Kontakt
+                  </div>
+                  <a
+                    href={`mailto:${job.contact_email}`}
+                    className="text-purple-600 hover:text-purple-700 font-semibold break-all"
+                  >
                     {job.contact_email}
                   </a>
                 </div>
               ) : null}
 
               <div className="mb-6 pb-6 border-b border-gray-200">
-                <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Opublikowano</div>
-                <div className="text-sm text-gray-700">{createdAt ?? '—'}</div>
+                <div className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                  Opublikowano
+                </div>
+                <div className="text-sm text-gray-700">{createdAt ?? "—"}</div>
               </div>
 
               {job.expires_at && (
                 <div className="mb-6 pb-6 border-b border-gray-200">
-                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Wygasa</div>
-                  <div className="text-sm text-gray-700">{new Date(job.expires_at).toLocaleString()}</div>
+                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                    Wygasa
+                  </div>
+                  <div className="text-sm text-gray-700">
+                    {new Date(job.expires_at).toLocaleString()}
+                  </div>
                 </div>
               )}
 
               <div>
-                <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Wyświetlenia</div>
-                <div className="text-2xl font-bold text-gray-900">{job.views ?? 0}</div>
+                <div className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                  Wyświetlenia
+                </div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {job.views ?? 0}
+                </div>
               </div>
             </div>
           </div>
