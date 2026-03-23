@@ -1,35 +1,34 @@
-"use client"
-import { useEffect, useState } from "react"
-import { supabase } from "../../../../lib/supabaseClient"
-
+"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 interface Job {
-  id: string
-  title: string
-  company: string
-  location: string
-  employment_type: string
-  is_remote: boolean
-  salary_from: number | null
-  salary_to: number | null
-  is_published: boolean
-  created_at: string
-  expires_at: string
-  posted_by: string
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  employment_type: string;
+  is_remote: boolean;
+  salary_from: number | null;
+  salary_to: number | null;
+  is_published: boolean;
+  created_at: string;
+  expires_at: string;
+  posted_by: string;
 }
 
-type StatusFilter = "all" | "active" | "expired" | "unpublished"
-type SortOrder = "newest" | "oldest"
+type StatusFilter = "all" | "active" | "expired" | "unpublished";
+type SortOrder = "newest" | "oldest";
 
 export default function JobsHistory() {
-  const [jobs, setJobs] = useState<Job[]>([])
-  const [loading, setLoading] = useState(true)
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
-  const [sortOrder, setSortOrder] = useState<SortOrder>("newest")
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchJobs()
-  }, [])
+    fetchJobs();
+  }, []);
 
   const fetchJobs = async () => {
     const { data, error } = await supabase
@@ -37,94 +36,94 @@ export default function JobsHistory() {
       .select(
         "id, title, company, location, employment_type, is_remote, salary_from, salary_to, is_published, created_at, expires_at, posted_by",
       )
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: false });
 
-    if (error) console.error("Błąd:", error)
-    else setJobs((data || []) as Job[])
-    setLoading(false)
-  }
+    if (error) console.error("Błąd:", error);
+    else setJobs((data || []) as Job[]);
+    setLoading(false);
+  };
 
   const getStatus = (job: Job) => {
-    if (!job.is_published) return "Nieopublikowane"
+    if (!job.is_published) return "Nieopublikowane";
     if (job.expires_at && new Date(job.expires_at) < new Date())
-      return "Wygaśnięte"
-    return "Aktywne"
-  }
+      return "Wygaśnięte";
+    return "Aktywne";
+  };
 
   const togglePublish = async (job: Job) => {
     const first = window.confirm(
       job.is_published
         ? `Na pewno CHCESZ WYCOFAĆ ogłoszenie "${job.title}"?`
         : `Na pewno CHCESZ OPUBLIKOWAĆ ogłoszenie "${job.title}"?`,
-    )
-    if (!first) return
+    );
+    if (!first) return;
 
     try {
-      setActionLoadingId(job.id)
+      setActionLoadingId(job.id);
       const { error } = await supabase
         .from("jobs")
         .update({ is_published: !job.is_published })
-        .eq("id", job.id)
+        .eq("id", job.id);
 
       if (error) {
-        console.error("Błąd publikowania:", error)
-        return
+        console.error("Błąd publikowania:", error);
+        return;
       }
 
-      setJobs(prev =>
-        prev.map(j =>
+      setJobs((prev) =>
+        prev.map((j) =>
           j.id === job.id ? { ...j, is_published: !job.is_published } : j,
         ),
-      )
+      );
     } finally {
-      setActionLoadingId(null)
+      setActionLoadingId(null);
     }
-  }
+  };
 
   const deleteJob = async (job: Job) => {
     const first = window.confirm(
       `Czy NA PEWNO chcesz trwale usunąć ogłoszenie "${job.title}"?`,
-    )
-    if (!first) return
-    const second = window.confirm("To działanie jest nieodwracalne. Potwierdź.")
-    if (!second) return
+    );
+    if (!first) return;
+    const second = window.confirm(
+      "To działanie jest nieodwracalne. Potwierdź.",
+    );
+    if (!second) return;
 
     try {
-      setActionLoadingId(job.id)
-      const { error } = await supabase.from("jobs").delete().eq("id", job.id)
+      setActionLoadingId(job.id);
+      const { error } = await supabase.from("jobs").delete().eq("id", job.id);
       if (error) {
-        console.error("Błąd usuwania ogłoszenia:", error)
-        return
+        console.error("Błąd usuwania ogłoszenia:", error);
+        return;
       }
-      setJobs(prev => prev.filter(j => j.id !== job.id))
+      setJobs((prev) => prev.filter((j) => j.id !== job.id));
     } finally {
-      setActionLoadingId(null)
+      setActionLoadingId(null);
     }
-  }
+  };
 
   const filteredJobs = jobs
-    .filter(job => {
-      const status = getStatus(job)
-      if (statusFilter === "active") return status === "Aktywne"
-      if (statusFilter === "expired") return status === "Wygaśnięte"
-      if (statusFilter === "unpublished") return status === "Nieopublikowane"
-      return true
+    .filter((job) => {
+      const status = getStatus(job);
+      if (statusFilter === "active") return status === "Aktywne";
+      if (statusFilter === "expired") return status === "Wygaśnięte";
+      if (statusFilter === "unpublished") return status === "Nieopublikowane";
+      return true;
     })
     .sort((a, b) => {
       if (sortOrder === "newest") {
         return (
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
-        )
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
       }
       return (
-        new Date(a.created_at).getTime() -
-        new Date(b.created_at).getTime()
-      )
-    })
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
 
   if (loading)
-    return <div className="text-center py-12">Ładowanie ogłoszeń...</div>
+    return <div className="text-center py-12">Ładowanie ogłoszeń...</div>;
 
   return (
     <div className="bg-white p-8 rounded-xl shadow-lg">
@@ -135,9 +134,7 @@ export default function JobsHistory() {
         <div className="flex flex-wrap items-center gap-3">
           <select
             value={statusFilter}
-            onChange={e =>
-              setStatusFilter(e.target.value as StatusFilter)
-            }
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
             className="border rounded-lg px-3 py-2 text-sm"
           >
             <option value="all">Wszystkie statusy</option>
@@ -148,9 +145,7 @@ export default function JobsHistory() {
 
           <select
             value={sortOrder}
-            onChange={e =>
-              setSortOrder(e.target.value as SortOrder)
-            }
+            onChange={(e) => setSortOrder(e.target.value as SortOrder)}
             className="border rounded-lg px-3 py-2 text-sm"
           >
             <option value="newest">Najnowsze najpierw</option>
@@ -190,7 +185,7 @@ export default function JobsHistory() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredJobs.map(job => (
+            {filteredJobs.map((job) => (
               <tr key={job.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-md truncate">
                   {job.title}
@@ -217,8 +212,8 @@ export default function JobsHistory() {
                       getStatus(job) === "Aktywne"
                         ? "bg-green-100 text-green-800"
                         : getStatus(job) === "Wygaśnięte"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-800"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
                     }`}
                   >
                     {getStatus(job)}
@@ -253,5 +248,5 @@ export default function JobsHistory() {
         </table>
       </div>
     </div>
-  )
+  );
 }

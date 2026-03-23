@@ -1,42 +1,42 @@
-"use client"
-import { useEffect, useState } from "react"
-import { supabase } from "../../../../lib/supabaseClient"
+"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 interface Application {
-  id: string
-  job_id: string
-  status: string
-  expected_salary: number | null
-  cv_url: string | null
-  created_at: string
-  user_id: string
+  id: string;
+  job_id: string;
+  status: string;
+  expected_salary: number | null;
+  cv_url: string | null;
+  created_at: string;
+  user_id: string;
 }
 
 interface Profile {
-  id: string
-  username: string | null
-  email: string
+  id: string;
+  username: string | null;
+  email: string;
 }
 
 interface Job {
-  id: string
-  title: string
-  company: string
+  id: string;
+  title: string;
+  company: string;
 }
 
 export default function StatusyPage() {
-  const [applications, setApplications] = useState<Application[]>([])
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [jobs, setJobs] = useState<Job[]>([])
-  const [loading, setLoading] = useState(true)
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAll()
-  }, [])
+    fetchAll();
+  }, []);
 
   const fetchAll = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
 
       const [appsRes, profilesRes, jobsRes] = await Promise.all([
         supabase
@@ -47,45 +47,45 @@ export default function StatusyPage() {
           .order("created_at", { ascending: false }),
         supabase.from("profiles").select("id, username, email"),
         supabase.from("jobs").select("id, title, company"),
-      ])
+      ]);
 
       if (appsRes.error) {
-        console.error("❌ Błąd applications:", appsRes.error)
-        setApplications([])
+        console.error("❌ Błąd applications:", appsRes.error);
+        setApplications([]);
       } else {
-        setApplications((appsRes.data || []) as Application[])
+        setApplications((appsRes.data || []) as Application[]);
       }
 
       if (profilesRes.error) {
-        console.error("❌ Błąd profiles:", profilesRes.error)
-        setProfiles([])
+        console.error("❌ Błąd profiles:", profilesRes.error);
+        setProfiles([]);
       } else {
-        setProfiles((profilesRes.data || []) as Profile[])
+        setProfiles((profilesRes.data || []) as Profile[]);
       }
 
       if (jobsRes.error) {
-        console.error("❌ Błąd jobs:", jobsRes.error)
-        setJobs([])
+        console.error("❌ Błąd jobs:", jobsRes.error);
+        setJobs([]);
       } else {
-        setJobs((jobsRes.data || []) as Job[])
+        setJobs((jobsRes.data || []) as Job[]);
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "accepted":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "rejected":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       case "pending":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const handleUpdateStatus = async (
     app: Application,
@@ -93,77 +93,84 @@ export default function StatusyPage() {
   ) => {
     const first = window.confirm(
       `Na pewno zmienić status na "${newStatus}" dla zgłoszenia użytkownika ${app.user_id}?`,
-    )
-    if (!first) return
+    );
+    if (!first) return;
 
     try {
       const { error } = await supabase
         .from("applications")
         .update({ status: newStatus })
-        .eq("id", app.id)
+        .eq("id", app.id);
 
       if (error) {
-        console.error("❌ Błąd zmiany statusu:", error)
-        return
+        console.error("❌ Błąd zmiany statusu:", error);
+        return;
       }
 
-      setApplications(prev =>
-        prev.map(a => (a.id === app.id ? { ...a, status: newStatus } : a)),
-      )
+      setApplications((prev) =>
+        prev.map((a) => (a.id === app.id ? { ...a, status: newStatus } : a)),
+      );
     } catch (e) {
-      console.error("❌ Błąd zmiany statusu (catch):", e)
+      console.error("❌ Błąd zmiany statusu (catch):", e);
     }
-  }
+  };
 
   const handleDeleteApplication = async (app: Application) => {
     const first = window.confirm(
       `Czy NA PEWNO chcesz usunąć zgłoszenie użytkownika ${app.user_id}?`,
-    )
-    if (!first) return
-    const second = window.confirm("To działanie jest nieodwracalne. Potwierdź.")
-    if (!second) return
+    );
+    if (!first) return;
+    const second = window.confirm(
+      "To działanie jest nieodwracalne. Potwierdź.",
+    );
+    if (!second) return;
 
     try {
       const { error } = await supabase
         .from("applications")
         .delete()
-        .eq("id", app.id)
+        .eq("id", app.id);
 
       if (error) {
-        console.error("❌ Błąd usuwania zgłoszenia:", error)
-        return
+        console.error("❌ Błąd usuwania zgłoszenia:", error);
+        return;
       }
 
-      setApplications(prev => prev.filter(a => a.id !== app.id))
+      setApplications((prev) => prev.filter((a) => a.id !== app.id));
     } catch (e) {
-      console.error("❌ Błąd usuwania zgłoszenia (catch):", e)
+      console.error("❌ Błąd usuwania zgłoszenia (catch):", e);
     }
-  }
+  };
 
   const handleEdit = (app: Application) => {
     alert(
       `Tu możesz otworzyć modal z edycją zgłoszenia.\nNa razie: id=${app.id}`,
-    )
-  }
+    );
+  };
 
   if (loading) {
-    return (
-      <div className="text-center py-12">Ładowanie statusów...</div>
-    )
+    return <div className="text-center py-12">Ładowanie statusów...</div>;
   }
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-3">Statusy zgłoszeń i ofert</h1>
-        <p className="text-gray-600">Monitoruj i zarządzaj aplikacjami kandydatów - zmień status, zaakceptuj lub odrzuć.</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          Statusy zgłoszeń i ofert
+        </h1>
+        <p className="text-gray-600">
+          Monitoruj i zarządzaj aplikacjami kandydatów - zmień status,
+          zaakceptuj lub odrzuć.
+        </p>
       </div>
 
       {/* Główna tabela */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-8 py-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Aplikacje ({applications.length})</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            Aplikacje ({applications.length})
+          </h2>
         </div>
 
         <div className="overflow-x-auto">
@@ -194,18 +201,18 @@ export default function StatusyPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {applications.map(app => {
-                const user = profiles.find(p => p.id === app.user_id) || {
+              {applications.map((app) => {
+                const user = profiles.find((p) => p.id === app.user_id) || {
                   id: app.user_id,
                   username: "Brak",
                   email: "Brak",
-                }
+                };
 
-                const job = jobs.find(j => j.id === app.job_id) || {
+                const job = jobs.find((j) => j.id === app.job_id) || {
                   id: app.job_id,
                   title: "Brak",
                   company: "Brak",
-                }
+                };
 
                 return (
                   <tr key={app.id} className="hover:bg-gray-50 transition">
@@ -236,10 +243,10 @@ export default function StatusyPage() {
                         {app.status === "pending"
                           ? "⏳ Oczekuje"
                           : app.status === "accepted"
-                          ? "✅ Zaakceptowana"
-                          : app.status === "rejected"
-                          ? "❌ Odrzucona"
-                          : app.status}
+                            ? "✅ Zaakceptowana"
+                            : app.status === "rejected"
+                              ? "❌ Odrzucona"
+                              : app.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
@@ -288,12 +295,15 @@ export default function StatusyPage() {
                       </div>
                     </td>
                   </tr>
-                )
+                );
               })}
 
               {applications.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
                     <div>Brak aplikacji</div>
                   </td>
                 </tr>
@@ -303,5 +313,5 @@ export default function StatusyPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

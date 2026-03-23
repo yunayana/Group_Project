@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 // 🔹 Типы
 type Status = "submitted" | "accepted" | "rejected";
@@ -78,7 +78,7 @@ export default function ApplicationsPage() {
         const { data: appsData, error: appsError } = await supabase
           .from("applications")
           .select(
-            "id, job_id, created_at, status, expected_salary, start_date, cv_url, cv_text"
+            "id, job_id, created_at, status, expected_salary, start_date, cv_url, cv_text",
           )
           .eq("user_id", current.id)
           .order("created_at", { ascending: false });
@@ -89,7 +89,7 @@ export default function ApplicationsPage() {
         if (mounted) setApplications(apps);
 
         const jobIds = Array.from(
-          new Set(apps.map((a) => a.job_id).filter(Boolean))
+          new Set(apps.map((a) => a.job_id).filter(Boolean)),
         );
 
         if (jobIds.length > 0) {
@@ -153,16 +153,14 @@ export default function ApplicationsPage() {
               {applications.map((a) => {
                 const job = jobsMap[a.job_id];
 
-                const status: Status =
-                  (a.status as Status) ?? "submitted";
+                const status: Status = (a.status as Status) ?? "submitted";
 
-                const statusConfig =
-                  statusConfigMap[status] ?? {
-                    icon: "📝",
-                    label: a.status ?? "unknown",
-                    bg: "bg-gray-600",
-                    text: "text-gray-200",
-                  };
+                const statusConfig = statusConfigMap[status] ?? {
+                  icon: "📝",
+                  label: a.status ?? "unknown",
+                  bg: "bg-gray-600",
+                  text: "text-gray-200",
+                };
 
                 return (
                   <div
@@ -180,8 +178,7 @@ export default function ApplicationsPage() {
                               📌 {job.title}
                             </h3>
                             <p className="text-gray-600 mb-3">
-                              🏭 {job.company} • 📍{" "}
-                              {job.location ?? "Zdalnie"}
+                              🏭 {job.company} • 📍 {job.location ?? "Zdalnie"}
                             </p>
                           </Link>
                         ) : (
@@ -193,21 +190,17 @@ export default function ApplicationsPage() {
                         <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
                           {a.expected_salary && (
                             <div>
-                              <span className="text-gray-600">
-                                💰 Pensja:
-                              </span>{" "}
+                              <span className="text-gray-600">💰 Pensja:</span>{" "}
                               <strong>{a.expected_salary}</strong>
                             </div>
                           )}
                           {a.start_date && (
                             <div>
-                              <span className="text-gray-600">
-                                📅 Start:
-                              </span>{" "}
+                              <span className="text-gray-600">📅 Start:</span>{" "}
                               <strong>
-                                {new Date(
-                                  a.start_date
-                                ).toLocaleDateString("pl-PL")}
+                                {new Date(a.start_date).toLocaleDateString(
+                                  "pl-PL",
+                                )}
                               </strong>
                             </div>
                           )}
@@ -239,15 +232,12 @@ export default function ApplicationsPage() {
                       <div className="flex flex-col items-start md:items-end justify-between gap-3">
                         <div className="text-xs text-gray-500">
                           🕐{" "}
-                          {new Date(a.created_at).toLocaleString(
-                            "pl-PL",
-                            {
-                              month: "2-digit",
-                              day: "2-digit",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
+                          {new Date(a.created_at).toLocaleString("pl-PL", {
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </div>
 
                         <span
@@ -262,7 +252,7 @@ export default function ApplicationsPage() {
               })}
             </div>
           )}
-        </div> 
+        </div>
       </div>
     </div>
   );
