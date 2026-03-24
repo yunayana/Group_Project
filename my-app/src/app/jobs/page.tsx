@@ -7,7 +7,7 @@ import {
   Clock,
   ChevronRight,
 } from "lucide-react";
-import { SearchFilters } from "./_components/SearchFilters"; // <--- Importujemy wyszukiwarkę
+import { SearchFilters } from "./_components/SearchFilters";
 
 export default async function JobsIndexPage({
   searchParams,
