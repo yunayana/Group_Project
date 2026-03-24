@@ -186,5 +186,5 @@ export async function updateJob(
   }
 
   revalidatePath("/employer-panel/jobs");
-  redirect("/employer-panel/applications");
+  redirect("/employer-panel/jobs");
 }

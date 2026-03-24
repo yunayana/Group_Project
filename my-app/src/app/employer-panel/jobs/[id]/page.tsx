@@ -32,7 +32,7 @@ export default async function EditJobPage({
     <section className="p-8 w-full max-w-3xl mx-auto bg-gray-50">
       <header className="mb-8">
         <Link
-          href="/employer-panel/applications"
+          href="/employer-panel/jobs"
           className="hover:underline mb-4 gap-2 font-medium flex items-center"
         >
           <ArrowLeft className="w-4 h-4" />

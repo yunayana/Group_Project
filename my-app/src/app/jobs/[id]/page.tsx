@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -19,6 +19,8 @@ export default function JobDetailPage() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvText, setCvText] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+
+  const supabase = createClient();
 
   useEffect(() => {
     if (!id) return;
@@ -207,7 +209,7 @@ export default function JobDetailPage() {
                         .from("applications")
                         .insert(payload);
                       if (insertError) throw insertError;
-                      router.push("/applications");
+                      router.push("/jobs");
                     } catch (err: any) {
                       console.error("Apply error", err);
                       const errMsg = err?.message ?? JSON.stringify(err);

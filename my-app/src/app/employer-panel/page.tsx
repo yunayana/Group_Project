@@ -30,9 +30,12 @@ export default async function EmployerDashboard() {
     .select("*", { count: "exact", head: true })
     .eq("employer_id", user.id);
 
-  const { count: newAppsCount } = await supabase
+  const { count: newAppsCount, error: countError } = await supabase
     .from("applications")
-    .select("*, jobs!inner(employer_id)", { count: "exact", head: true })
+    .select("*, jobs!fk_app_job!inner(employer_id)", {
+      count: "exact",
+      head: true,
+    })
     .eq("jobs.employer_id", user.id)
     .eq("status", "submitted");
 
@@ -44,9 +47,9 @@ export default async function EmployerDashboard() {
   const totalViews =
     jobViews?.reduce((sum, job) => sum + (job.views || 0), 0) || 0;
 
-  const { data: recentApplications } = await supabase
+  const { data: recentApplications, error: recentError } = await supabase
     .from("applications")
-    .select("id, created_at, status, jobs!inner(title, employer_id)")
+    .select("id, created_at, status, jobs!fk_app_job!inner(title, employer_id)")
     .eq("jobs.employer_id", user.id)
     .eq("status", "submitted")
     .order("created_at", { ascending: false })
@@ -99,7 +102,7 @@ export default async function EmployerDashboard() {
             <Plus className="w-5 h-5" /> Dodaj nowe ogłoszenie
           </Link>
           <Link
-            href="/employer-panel/applications"
+            href="/employer-panel/jobs"
             className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white px-6 py-3 rounded font-medium transition-colors"
           >
             Przeglądaj ogłoszenia
@@ -152,8 +155,8 @@ export default async function EmployerDashboard() {
                       </td>
                       <td className="p-4">
                         <Link
-                          href={`/employer-panel/applications/${app.id}`}
-                          className="flex items-center gap-1 hover:text-blue-800 transition-colors text-sm font-medium text-red-900"
+                          href={`/employer-panel/applications?jobId${app.id}`}
+                          className="flex items-center gap-1 transition-colors text-sm font-medium"
                         >
                           Zobacz szczegóły <ArrowRight className="w-4 h-4" />
                         </Link>
