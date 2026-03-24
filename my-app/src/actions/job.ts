@@ -76,3 +76,37 @@ export async function createJob(
   revalidatePath("/employer-panel");
   redirect("/employer-panel");
 }
+
+export async function deleteJob(jobId: string) {
+  const supabaseServer = await createClient();
+
+  const {
+    data: { user },
+  } = await supabaseServer.auth.getUser();
+
+  if (!user) {
+    return { success: false, message: "Brak autoryzacji" };
+  }
+
+  const { error } = await supabaseServer
+    .from("jobs")
+    .delete()
+    .eq("id", jobId)
+    .eq("employer_id", user.id);
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("Delete DB Error:", error);
+    }
+
+    return {
+      success: false,
+      message: "Błąd podczas usuwania ogłoszenia z bazy",
+    };
+  }
+
+  revalidatePath("/employer-panel/jobs");
+  revalidatePath("/employer-panel");
+
+  return { success: true, message: "Ogłoszenie zostało pomyślnie usunięte" };
+}

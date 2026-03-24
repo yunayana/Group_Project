@@ -1,6 +1,6 @@
 import { InformationBoxes } from "@/app/employer-panel/_components/information-boxes";
 import { createClient } from "@/lib/supabase/server";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -94,9 +94,9 @@ export default async function EmployerDashboard() {
         <div className="flex gap-4 flex-col sm:flex-row">
           <Link
             href="/employer-panel/jobs/new"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-medium flex items-center gap-2 transition-colors"
           >
-            + Dodaj nowe ogłoszenie
+            <Plus className="w-5 h-5" /> Dodaj nowe ogłoszenie
           </Link>
           <Link
             href="/employer-panel/applications"

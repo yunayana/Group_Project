@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { createJob } from "@/actions/createJob";
+import { createJob } from "@/actions/job";
 import { ArrowLeft } from "lucide-react";
 import { useActionState } from "react";
 
