@@ -78,8 +78,8 @@ export default async function EmployerJobsPage() {
                   </span>
                   <span className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4" />
-                    {job.salary_min && job.salary_max
-                      ? `${job.salary_min} - ${job.salary_max} PLN`
+                    {job.salary_from && job.salary_to
+                      ? `${job.salary_from} - ${job.salary_to} PLN`
                       : "Nie podano wynagrodzenia"}
                   </span>
                   <span className="flex items-center gap-2">
