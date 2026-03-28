@@ -1,22 +1,25 @@
 "use client";
 
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function Header() {
   const [user, setUser] = useState<any | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isEmployer, setIsEmployer] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
     let mounted = true;
     let adminCheckTimer: NodeJS.Timeout | null = null;
 
-    const checkAdminRole = async (userId: string) => {
+    const checkRoles = async (userId: string) => {
       if (!userId) {
         setIsAdmin(false);
+        setIsEmployer(false);
         return;
       }
       try {
@@ -27,10 +30,14 @@ export default function Header() {
           .single();
         if (mounted) {
           setIsAdmin(data?.role === "admin");
+          setIsEmployer(data?.role === "employer");
         }
       } catch (error) {
-        console.error("Error checking admin role:", error);
-        if (mounted) setIsAdmin(false);
+        console.error("Error checking roles:", error);
+        if (mounted) {
+          setIsAdmin(false);
+          setIsEmployer(false);
+        }
       }
     };
 
@@ -41,9 +48,10 @@ export default function Header() {
         const u = data?.user ?? null;
         setUser(u);
         if (u?.id) {
-          await checkAdminRole(u.id);
+          await checkRoles(u.id);
         } else {
           setIsAdmin(false);
+          setIsEmployer(false);
         }
       } finally {
         if (mounted) setLoading(false);
@@ -58,13 +66,14 @@ export default function Header() {
         const u = session?.user ?? null;
         setUser(u);
 
-        // Debounce admin check
+        // Debounce role check
         if (adminCheckTimer) clearTimeout(adminCheckTimer);
         adminCheckTimer = setTimeout(() => {
           if (u?.id) {
-            checkAdminRole(u.id);
+            checkRoles(u.id);
           } else {
             setIsAdmin(false);
+            setIsEmployer(false);
           }
         }, 300);
       },
@@ -97,7 +106,7 @@ export default function Header() {
             </span>
           </a>
 
-          {user && (
+          {user && !loading && (
             <nav className="hidden md:flex items-center gap-6">
               <a
                 href="/applications"
@@ -113,12 +122,35 @@ export default function Header() {
                   Panel admina
                 </a>
               )}
+              {isEmployer && !isAdmin && (
+                <a
+                  href="/employer-panel"
+                  className="text-gray-700 hover:text-purple-600 font-medium transition"
+                >
+                  Panel pracodawcy
+                </a>
+              )}
             </nav>
           )}
         </div>
 
-        <div className="flex items-center gap-4">
-          {!user ? (
+        <div className="flex items-center gap-4 min-w-[200px] justify-end">
+          {!loading && user ? (
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:block">
+                <div className="text-xs text-gray-500">Zalogowany jako</div>
+                <div className="text-sm font-semibold text-gray-900">
+                  {user.email}
+                </div>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition"
+              >
+                Wyloguj
+              </button>
+            </div>
+          ) : !loading ? (
             <>
               <a
                 href="/register"
@@ -134,20 +166,7 @@ export default function Header() {
               </a>
             </>
           ) : (
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:block">
-                <div className="text-xs text-gray-500">Zalogowany jako</div>
-                <div className="text-sm font-semibold text-gray-900">
-                  {user.email}
-                </div>
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition"
-              >
-                Wyloguj
-              </button>
-            </div>
+            <div className="w-20 h-10 bg-gray-200 rounded-full animate-pulse" />
           )}
         </div>
       </div>

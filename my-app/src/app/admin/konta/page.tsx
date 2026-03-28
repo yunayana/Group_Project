@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/client";
 interface Stats {
   totalUsers: number;
   totalJobs: number;
@@ -28,6 +28,7 @@ interface Application {
 }
 
 export default function KontaPage() {
+  const supabase = createClient();
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     totalJobs: 0,
@@ -118,7 +119,7 @@ export default function KontaPage() {
     load();
   }, []);
 
-  const handleChangeRole = async (id: string, newRole: "user" | "admin") => {
+  const handleChangeRole = async (id: string, newRole: "user" | "employer" | "admin") => {
     const ok = window.confirm(
       `Na pewno zmienić rolę użytkownika na "${newRole}"?`,
     );
@@ -245,7 +246,8 @@ export default function KontaPage() {
           Zarządzanie kontami
         </h2>
 
-        <div className="overflow-x-auto">
+        {/* Desktop view - table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
@@ -289,13 +291,14 @@ export default function KontaPage() {
                         onChange={(e) =>
                           handleChangeRole(
                             acc.id,
-                            e.target.value as "user" | "admin",
+                            e.target.value as "user" | "employer" | "admin",
                           )
                         }
                         disabled={actionLoadingId === acc.id}
                         className="border rounded px-2 py-1 text-sm"
                       >
                         <option value="user">User</option>
+                        <option value="employer">Employer</option>
                         <option value="admin">Admin</option>
                       </select>
                     </td>
@@ -362,6 +365,95 @@ export default function KontaPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile view - cards */}
+        <div className="md:hidden space-y-3">
+          {accounts.length === 0 ? (
+            <div className="text-center text-gray-500 py-6">Brak kont do wyświetlenia.</div>
+          ) : (
+            accounts.map((acc) => {
+              const label = acc.username || acc.email || acc.id;
+              return (
+                <div key={acc.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900">{acc.username || "—"}</h3>
+                        <p className="text-sm text-gray-500">{acc.email}</p>
+                      </div>
+                      <span
+                        className={
+                          acc.is_blocked
+                            ? "px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 whitespace-nowrap"
+                            : "px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 whitespace-nowrap"
+                        }
+                      >
+                        {acc.is_blocked ? "Zablokowany" : "Aktywny"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-xs text-gray-500">Rola</span>
+                        <select
+                          value={acc.role || "user"}
+                          onChange={(e) =>
+                            handleChangeRole(
+                              acc.id,
+                              e.target.value as "user" | "employer" | "admin",
+                            )
+                          }
+                          disabled={actionLoadingId === acc.id}
+                          className="w-full border rounded px-2 py-1 text-sm mt-1"
+                        >
+                          <option value="user">User</option>
+                          <option value="employer">Employer</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">Założone</span>
+                        <p className="text-sm font-medium text-gray-900 mt-1">
+                          {new Date(acc.created_at).toLocaleDateString("pl-PL")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pt-2">
+                      <button
+                        onClick={() => handleToggleBlock(acc.id, acc.is_blocked, label)}
+                        disabled={actionLoadingId === acc.id}
+                        className={
+                          acc.is_blocked
+                            ? "w-full px-3 py-2 text-sm rounded bg-green-600 text-white hover:bg-green-700"
+                            : "w-full px-3 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700"
+                        }
+                      >
+                        {acc.is_blocked ? "Odblokuj" : "Zablokuj"}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          setSelectedAccount(acc);
+                          await fetchApplicationsForUser(acc.id);
+                        }}
+                        className="w-full px-3 py-2 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                      >
+                        Zgłoszenia
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAccount(acc.id, label)}
+                        disabled={actionLoadingId === acc.id}
+                        className="w-full px-3 py-2 text-sm rounded bg-gray-700 text-white hover:bg-black"
+                      >
+                        Usuń
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
 
         {selectedAccount && (

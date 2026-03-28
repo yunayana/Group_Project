@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createClient();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -42,13 +43,9 @@ export default function AdminLayout({
           const admin = await checkAdminRole(u.id);
           if (mounted) {
             setIsAdmin(admin);
-            if (!admin) {
-              router.push("/");
-            }
           }
         } else {
-          setIsAdmin(false);
-          router.push("/");
+          if (mounted) setIsAdmin(false);
         }
       } catch (e) {
         console.error("Admin check error:", e);
@@ -75,14 +72,10 @@ export default function AdminLayout({
             checkAdminRole(u.id).then((admin) => {
               if (mounted) {
                 setIsAdmin(admin);
-                if (!admin) {
-                  router.push("/");
-                }
               }
             });
           } else {
             setIsAdmin(false);
-            router.push("/");
           }
         }, 300);
       },

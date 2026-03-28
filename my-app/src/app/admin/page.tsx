@@ -1,8 +1,28 @@
-'use client';
-
+import { createClient } from "@/lib/supabase/server";
 import Link from 'next/link';
+import { redirect } from "next/navigation";
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    redirect("/");
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}

@@ -19,8 +19,26 @@ export default function JobDetailPage() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvText, setCvText] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const [user, setUser] = useState<any | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   const supabase = createClient();
+
+  // Check if user is logged in
+  useEffect(() => {
+    let mounted = true;
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (mounted) {
+        setUser(data?.user ?? null);
+        setCheckingAuth(false);
+      }
+    };
+    checkUser();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -150,12 +168,30 @@ export default function JobDetailPage() {
             {/* Formularz aplikacji */}
             {!showApplyForm ? (
               <div className="text-center py-8">
-                <button
-                  onClick={() => setShowApplyForm(true)}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-shadow text-lg"
-                >
-                  Aplikuj na tę ofertę
-                </button>
+                {checkingAuth ? (
+                  <div className="flex justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-purple-600"></div>
+                  </div>
+                ) : user ? (
+                  <button
+                    onClick={() => setShowApplyForm(true)}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-shadow text-lg"
+                  >
+                    Aplikuj na tę ofertę
+                  </button>
+                ) : (
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+                    <p className="text-blue-900 mb-4">
+                      Aby aplikować, musisz być zalogowany
+                    </p>
+                    <button
+                      onClick={() => router.push("/login")}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-shadow text-lg"
+                    >
+                      Zaloguj się i aplikuj
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
@@ -209,7 +245,7 @@ export default function JobDetailPage() {
                         .from("applications")
                         .insert(payload);
                       if (insertError) throw insertError;
-                      router.push("/jobs");
+                      router.push("/applications");
                     } catch (err: any) {
                       console.error("Apply error", err);
                       const errMsg = err?.message ?? JSON.stringify(err);

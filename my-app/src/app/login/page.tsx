@@ -29,9 +29,37 @@ export default function LoginPage() {
       });
       if (error) {
         setError(error.message || "Błąd logowania");
-      } else if (data?.user) {
-        router.push("/");
+        setLoading(false);
+        return;
       }
+
+      if (!data?.user?.id) {
+        setError("Błąd logowania - użytkownik nie znaleziony");
+        setLoading(false);
+        return;
+      }
+
+      // Sprawdź czy użytkownik jest zablokowany
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("is_blocked")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError) {
+        setError("Błąd sprawdzania konta");
+        setLoading(false);
+        return;
+      }
+
+      if (profileData?.is_blocked) {
+        setError("To konto zostało zablokowane. Skontaktuj się z administratorem.");
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+
+      router.push("/");
     } catch (e: any) {
       setError(e?.message || "Nieznany błąd");
     } finally {

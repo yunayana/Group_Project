@@ -49,7 +49,7 @@ export default async function EmployerDashboard() {
 
   const { data: recentApplications, error: recentError } = await supabase
     .from("applications")
-    .select("id, created_at, status, jobs!fk_app_job!inner(title, employer_id)")
+    .select("id, created_at, status, jobs!fk_app_job!inner(id, title, employer_id)")
     .eq("jobs.employer_id", user.id)
     .eq("status", "submitted")
     .order("created_at", { ascending: false })
@@ -155,7 +155,7 @@ export default async function EmployerDashboard() {
                       </td>
                       <td className="p-4">
                         <Link
-                          href={`/employer-panel/applications?jobId${app.id}`}
+                          href={`/employer-panel/applications?jobId=${jobInfo?.id}`}
                           className="flex items-center gap-1 transition-colors text-sm font-medium"
                         >
                           Zobacz szczegóły <ArrowRight className="w-4 h-4" />

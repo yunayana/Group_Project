@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/client";
 interface Job {
   id: string;
   title: string;
@@ -20,6 +20,7 @@ type StatusFilter = "all" | "active" | "expired" | "unpublished";
 type SortOrder = "newest" | "oldest";
 
 export default function JobsHistory() {
+  const supabase = createClient();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -92,11 +93,32 @@ export default function JobsHistory() {
 
     try {
       setActionLoadingId(job.id);
-      const { error } = await supabase.from("jobs").delete().eq("id", job.id);
-      if (error) {
-        console.error("Błąd usuwania ogłoszenia:", error);
+
+      // Najpierw usuń powiązane aplikacje
+      const { error: appsError } = await supabase
+        .from("applications")
+        .delete()
+        .eq("job_id", job.id);
+
+      if (appsError) {
+        console.error("Błąd usuwania aplikacji:", appsError);
+        alert("Błąd usuwania - nie udało się usunąć powiązanych aplikacji");
+        setActionLoadingId(null);
         return;
       }
+
+      // Potem usuń ogłoszenie
+      const { error: jobError } = await supabase
+        .from("jobs")
+        .delete()
+        .eq("id", job.id);
+
+      if (jobError) {
+        console.error("Błąd usuwania ogłoszenia:", jobError);
+        alert(`Błąd usuwania ogłoszenia: ${jobError.message}`);
+        return;
+      }
+
       setJobs((prev) => prev.filter((j) => j.id !== job.id));
     } finally {
       setActionLoadingId(null);
@@ -127,7 +149,7 @@ export default function JobsHistory() {
 
   return (
     <div className="bg-white p-8 rounded-xl shadow-lg">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <div className="flex flex-col gap-4 mb-8 md:flex-row md:items-center md:justify-between">
         <h2 className="text-3xl font-bold text-gray-900">
           Historia ogłoszeń ({filteredJobs.length}/{jobs.length})
         </h2>
@@ -154,7 +176,8 @@ export default function JobsHistory() {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Desktop view - table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -246,6 +269,86 @@ export default function JobsHistory() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile view - cards */}
+      <div className="md:hidden space-y-4">
+        {filteredJobs.map((job) => (
+          <div key={job.id} className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 break-words text-base">
+                    {job.title}
+                  </h3>
+                  <p className="text-sm text-gray-600">{job.company}</p>
+                </div>
+                <span
+                  className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                    getStatus(job) === "Aktywne"
+                      ? "bg-green-100 text-green-800"
+                      : getStatus(job) === "Wygaśnięte"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {getStatus(job)}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-gray-500">Lokalizacja</span>
+                  <p className="font-medium text-gray-900">
+                    {job.is_remote ? "🌐 Zdalnie" : job.location}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Typ</span>
+                  <p className="font-medium text-gray-900">{job.employment_type}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-gray-500">Pensja</span>
+                  <p className="font-medium text-gray-900">
+                    {job.salary_from
+                      ? `${job.salary_from} - ${job.salary_to || "neg."} zł`
+                      : "Nie podano"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Data</span>
+                  <p className="font-medium text-gray-900">
+                    {new Date(job.created_at).toLocaleDateString("pl-PL")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2 flex-wrap">
+                <button
+                  onClick={() => togglePublish(job)}
+                  disabled={actionLoadingId === job.id}
+                  className={
+                    job.is_published
+                      ? "flex-1 px-3 py-2 text-xs rounded bg-yellow-500 text-white hover:bg-yellow-600"
+                      : "flex-1 px-3 py-2 text-xs rounded bg-green-600 text-white hover:bg-green-700"
+                  }
+                >
+                  {job.is_published ? "Wycofaj" : "Publikuj"}
+                </button>
+                <button
+                  onClick={() => deleteJob(job)}
+                  disabled={actionLoadingId === job.id}
+                  className="flex-1 px-3 py-2 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+                >
+                  Usuń
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

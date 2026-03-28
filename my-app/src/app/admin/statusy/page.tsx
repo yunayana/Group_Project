@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/client";
 
 interface Application {
   id: string;
@@ -25,6 +25,7 @@ interface Job {
 }
 
 export default function StatusyPage() {
+  const supabase = createClient();
   const [applications, setApplications] = useState<Application[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -173,7 +174,8 @@ export default function StatusyPage() {
           </h2>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop view - table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -310,6 +312,113 @@ export default function StatusyPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile view - cards */}
+        <div className="md:hidden space-y-3 p-4">
+          {applications.length === 0 ? (
+            <div className="text-center text-gray-500 py-8">Brak aplikacji</div>
+          ) : (
+            applications.map((app) => {
+              const user = profiles.find((p) => p.id === app.user_id) || {
+                id: app.user_id,
+                username: "Brak",
+                email: "Brak",
+              };
+
+              const job = jobs.find((j) => j.id === app.job_id) || {
+                id: app.job_id,
+                title: "Brak",
+                company: "Brak",
+              };
+
+              return (
+                <div key={app.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 break-words">{job.title}</h3>
+                        <p className="text-sm text-gray-600">{job.company}</p>
+                      </div>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full font-semibold whitespace-nowrap ${getStatusColor(app.status)}`}
+                      >
+                        {app.status === "pending"
+                          ? "⏳ Oczekuje"
+                          : app.status === "accepted"
+                            ? "✅ Zaakceptowana"
+                            : app.status === "rejected"
+                              ? "❌ Odrzucona"
+                              : app.status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Kandydat</span>
+                        <p className="font-medium text-gray-900">{user.username}</p>
+                        <p className="text-xs text-gray-600 truncate">{user.email}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Pensja</span>
+                        <p className="font-medium text-gray-900">
+                          {app.expected_salary ? `${app.expected_salary} zł` : "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-500">Data</span>
+                        <p className="font-medium text-gray-900">
+                          {new Date(app.created_at).toLocaleDateString("pl-PL")}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">CV</span>
+                        {app.cv_url ? (
+                          <a
+                            href={app.cv_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-purple-600 hover:text-purple-700 block font-medium"
+                          >
+                            📄 Otwórz
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={() => handleUpdateStatus(app, "accepted")}
+                        className="flex-1 inline-flex items-center justify-center bg-green-100 text-green-700 hover:bg-green-200 px-3 py-2 rounded text-sm font-medium transition"
+                        title="Zaakceptuj"
+                      >
+                        ✓ Zaakceptuj
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(app, "rejected")}
+                        className="flex-1 inline-flex items-center justify-center bg-red-100 text-red-700 hover:bg-red-200 px-3 py-2 rounded text-sm font-medium transition"
+                        title="Odrzuć"
+                      >
+                        ✕ Odrzuć
+                      </button>
+                      <button
+                        onClick={() => handleDeleteApplication(app)}
+                        className="inline-flex items-center justify-center bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-2 rounded text-sm font-medium transition"
+                        title="Usuń"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

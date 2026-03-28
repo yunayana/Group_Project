@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -67,9 +68,9 @@ export default function RegisterPage() {
       setUsername("");
       setPassword("");
 
-      // Po 2 sekundach przekieruj na login
+      // Po 2 sekundach przekieruj na strę główną
       setTimeout(() => {
-        router.push("/login");
+        router.push("/");
       }, 2000);
     } catch (e: any) {
       setError(e?.message || "Nieznany błąd");

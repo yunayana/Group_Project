@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabase/client";
 
 // 🔹 Типы
 type Status = "submitted" | "accepted" | "rejected";
@@ -58,6 +58,7 @@ export default function ApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
     let mounted = true;
@@ -69,7 +70,10 @@ export default function ApplicationsPage() {
         const current = data?.user ?? null;
 
         if (!current) {
-          router.push("/login");
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+          }
           return;
         }
 
@@ -121,9 +125,38 @@ export default function ApplicationsPage() {
     return () => {
       mounted = false;
     };
-  }, [router]);
+  }, []);
 
-  if (!user) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen py-8 px-4">
+        <div className="max-w-4xl mx-auto flex justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-purple-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen py-8 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4 text-white">📋 Moje aplikacje</h2>
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-8">
+            <p className="text-blue-900 mb-4 text-lg">
+              Aby zobaczyć swoje aplikacje, musisz być zalogowany
+            </p>
+            <button
+              onClick={() => router.push("/login")}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition-shadow"
+            >
+              Zaloguj się
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-8 px-4">
@@ -136,11 +169,7 @@ export default function ApplicationsPage() {
         </p>
 
         <div className="text-black">
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-purple-600"></div>
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               ❌ Błąd: {error}
             </div>
