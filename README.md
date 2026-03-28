@@ -87,14 +87,14 @@ Cała aplikacja dostępna w **języku polskim** z odpowiednim formatowaniem dat 
 
 ## 🚀 Możliwości
 
-✅ Pełny cykl rekrutacji
-✅ Bezpieczna autentykacja
-✅ Kontrola dostępu oparta na rolach (RBAC)
-✅ Responsywny interfejs
-✅ Zarządzanie aplikacjami kandydatów
-✅ Panel admina z pełnym kontrolowaniem systemu
-✅ Blokowanie/odblokowywanie użytkowników
-✅ Kaskadowe usuwanie danych (aplikacje usuwane z ogłoszeniami)
+- ✅ Pełny cykl rekrutacji
+- ✅ Bezpieczna autentykacja
+- ✅ Kontrola dostępu oparta na rolach (RBAC)
+- ✅ Responsywny interfejs
+- ✅ Zarządzanie aplikacjami kandydatów
+- ✅ Panel admina z pełnym kontrolowaniem systemu
+- ✅ Blokowanie/odblokowywanie użytkowników
+- ✅ Kaskadowe usuwanie danych (aplikacje usuwane z ogłoszeniami)
 
 ## 👥 Zespół
 - **Lera** - Autentykacja, baza danych, panel użytkownika
