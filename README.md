@@ -1,6 +1,7 @@
 # Portal Ofert Pracy 💼
 
 Nowoczesna aplikacja webowa do zarządzania ofertami pracy i aplikacjami kandydatów. Projekt został zbudowany z wykorzystaniem Next.js, React i Supabase.
+https://group-project-iota-ten.vercel.app/admin
 
 ## ✨ Główne Funkcjonalności
 
